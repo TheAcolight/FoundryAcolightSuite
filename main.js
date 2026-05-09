@@ -41,6 +41,9 @@ const HOTKEY_CHOICES = {
 Hooks.once("init", () => {
   console.log("Android Test Module | Initializing...");
 
+  game.socket.on(SOCKET_CHANNEL, (data) => {
+  });
+
   game.settings.register(MODULE_ID, "hotkey", {
     name: "Speech Bubble Hotkey",
     hint: "Choose a key to hold for the bubble. Select Custom to enter a specific KeyboardEvent.code.",
