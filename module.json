@@ -2,7 +2,7 @@
   "id": "AcolightSuite",
   "title": "Acolight Suite",
   "description": "A module for The Acolight's ttrpg games.",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "compatibility": {
     "minimum": "13",
     "verified": "13"
