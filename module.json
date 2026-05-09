@@ -2,7 +2,7 @@
   "id": "AcolightSuite",
   "title": "Acolight Suite",
   "description": "A module for The Acolight's ttrpg games.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "compatibility": {
     "minimum": "13",
     "verified": "13"
@@ -15,5 +15,5 @@
   "esmodules": ["main.js"],
   "styles": ["style.css"],
   "manifest": "https://github.com/TheAcolight/FoundryAcolightSuite/releases/latest/download/module.json",
-  "download": "https://github.com/TheAcolight/FoundryAcolightSuite/releases/download/0.0.2/module.zip"
+  "download": "https://github.com/TheAcolight/FoundryAcolightSuite/releases/download/0.0.3/module.zip"
 }
