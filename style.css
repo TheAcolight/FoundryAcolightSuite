@@ -1,1 +1,36 @@
-/* Custom styles go here */
+#acolight-bubble-layer {
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: 10000;
+}
+
+.acolight-bubble {
+	position: fixed;
+	top: 0;
+	left: 0;
+	padding: 6px 10px;
+	background-color: #f7f6f2;
+	color: #1a1a1a;
+	border: 2px solid var(--acolight-bubble-color, #222222);
+	border-radius: 14px 14px 14px 4px;
+	font-size: 12px;
+	font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	transform: translate(-9999px, -9999px);
+	transition: transform 0.03s linear;
+	white-space: nowrap;
+}
+
+.acolight-bubble::after {
+	content: "";
+	position: absolute;
+	left: 12px;
+	bottom: -6px;
+	width: 10px;
+	height: 10px;
+	background-color: #f7f6f2;
+	border-left: 2px solid var(--acolight-bubble-color, #222222);
+	border-bottom: 2px solid var(--acolight-bubble-color, #222222);
+	transform: rotate(45deg);
+}
