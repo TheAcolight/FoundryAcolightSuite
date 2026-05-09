@@ -3,17 +3,61 @@ const SOCKET_CHANNEL = `module.${MODULE_ID}`;
 const BUBBLE_LAYER_ID = "acolight-bubble-layer";
 const DEFAULT_BUBBLE_TEXT = "...";
 const SEND_THROTTLE_MS = 33;
+const CUSTOM_HOTKEY_VALUE = "Custom";
+const HOTKEY_CHOICES = {
+  ShiftLeft: "Left Shift",
+  ShiftRight: "Right Shift",
+  ControlLeft: "Left Ctrl",
+  ControlRight: "Right Ctrl",
+  AltLeft: "Left Alt",
+  AltRight: "Right Alt",
+  Space: "Space",
+  KeyB: "B",
+  KeyC: "C",
+  KeyE: "E",
+  KeyF: "F",
+  KeyG: "G",
+  KeyH: "H",
+  KeyQ: "Q",
+  KeyR: "R",
+  KeyT: "T",
+  KeyV: "V",
+  KeyX: "X",
+  KeyY: "Y",
+  KeyZ: "Z",
+  Digit1: "1",
+  Digit2: "2",
+  Digit3: "3",
+  Digit4: "4",
+  Digit5: "5",
+  Digit6: "6",
+  Digit7: "7",
+  Digit8: "8",
+  Digit9: "9",
+  Digit0: "0",
+  Custom: "Custom (use field below)",
+};
 
 Hooks.once("init", () => {
   console.log("Android Test Module | Initializing...");
 
   game.settings.register(MODULE_ID, "hotkey", {
     name: "Speech Bubble Hotkey",
-    hint: "KeyboardEvent.code value (e.g. KeyB, ShiftLeft). Hold to show the bubble.",
+    hint: "Choose a key to hold for the bubble. Select Custom to enter a specific KeyboardEvent.code.",
     scope: "client",
     config: true,
     type: String,
+    choices: HOTKEY_CHOICES,
     default: "ShiftLeft",
+  });
+
+  game.settings.register(MODULE_ID, "customHotkey", {
+    name: "Custom Hotkey Code",
+    hint: "Used when Hotkey is set to Custom (example: KeyB, ShiftLeft).",
+    scope: "client",
+    config: true,
+    type: String,
+    default: "",
   });
 });
 
@@ -78,6 +122,14 @@ Hooks.on("ready", () => {
     return tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable === true;
   };
 
+  const getHotkeyCode = () => {
+    const selected = game.settings.get(MODULE_ID, "hotkey");
+    if (selected === CUSTOM_HOTKEY_VALUE) {
+      return game.settings.get(MODULE_ID, "customHotkey") || "ShiftLeft";
+    }
+    return selected || "ShiftLeft";
+  };
+
   const sendState = (active, text) => {
     if (!localUserId) return;
     socket.emit(SOCKET_CHANNEL, {
@@ -104,16 +156,17 @@ Hooks.on("ready", () => {
   const handleKeyDown = (event) => {
     if (event.repeat) return;
     if (isEditableTarget(event.target)) return;
-    if (event.code !== game.settings.get(MODULE_ID, "hotkey")) return;
+    if (event.code !== getHotkeyCode()) return;
 
     isActive = true;
     setBubbleActive(localUserId, true, DEFAULT_BUBBLE_TEXT, game.user?.color);
     moveBubble(localUserId, lastMouse.x, lastMouse.y);
     sendState(true, DEFAULT_BUBBLE_TEXT);
+    sendMove(lastMouse.x, lastMouse.y, DEFAULT_BUBBLE_TEXT);
   };
 
   const handleKeyUp = (event) => {
-    if (event.code !== game.settings.get(MODULE_ID, "hotkey")) return;
+    if (event.code !== getHotkeyCode()) return;
     if (!isActive) return;
 
     isActive = false;
