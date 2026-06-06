@@ -1,4 +1,5 @@
 const MODULE_ID = "AcolightSuite";
+const SOCKET_CHANNEL = `module.${MODULE_ID}`;
 const DEFAULT_BUBBLE_TEXT = "...";
 const CUSTOM_HOTKEY_VALUE = "Custom";
 const HOTKEY_CHOICES = {
@@ -38,6 +39,15 @@ const HOTKEY_CHOICES = {
 Hooks.once("init", () => {
   console.log("AcolightSuite | Initializing...");
 
+  game.socket.on(SOCKET_CHANNEL, (payload) => {
+    if (payload.type === "panToToken" && game.settings.get(MODULE_ID, "panToBubble")) {
+      const token = canvas.tokens?.get(payload.tokenId);
+      if (token && token.center) {
+        canvas.animatePan({ x: token.center.x, y: token.center.y, duration: 250 });
+      }
+    }
+  });
+
   game.settings.register(MODULE_ID, "hotkey", {
     name: "Speech Bubble Hotkey",
     hint: "Choose a key to hold for the bubble. Select Custom to enter a specific KeyboardEvent.code.",
@@ -55,6 +65,15 @@ Hooks.once("init", () => {
     config: true,
     type: String,
     default: "",
+  });
+
+  game.settings.register(MODULE_ID, "panToBubble", {
+    name: "Pan Screen to Chat Bubbles",
+    hint: "If enabled, your screen will automatically pan to tokens that start typing a chat bubble using this module.",
+    scope: "client",
+    config: true,
+    type: Boolean,
+    default: false,
   });
 });
 
@@ -92,6 +111,7 @@ Hooks.on("ready", () => {
       if (token && canvas.hud?.bubbles) {
         // Broadcast the typing bubble to all clients
         canvas.hud.bubbles.broadcast(token, DEFAULT_BUBBLE_TEXT, { emote: false });
+        game.socket.emit(SOCKET_CHANNEL, { type: "panToToken", tokenId: token.id });
       }
     }
   };
