@@ -51,6 +51,7 @@ Hooks.once("init", () => {
       if (token && canvas.hud?.bubbles?._clearBubble) {
         canvas.hud.bubbles._clearBubble(token);
       }
+      document.querySelectorAll(`.chat-bubble[data-token-id="${payload.tokenId}"]`).forEach(e => e.remove());
     }
   });
 
@@ -61,7 +62,7 @@ Hooks.once("init", () => {
     config: true,
     type: String,
     choices: HOTKEY_CHOICES,
-    default: "ShiftLeft",
+    default: "B",
   });
 
   game.settings.register(MODULE_ID, "customHotkey", {
@@ -119,7 +120,7 @@ Hooks.on("ready", () => {
         // Broadcast the typing bubble to all clients
         canvas.hud.bubbles.broadcast(token, DEFAULT_BUBBLE_TEXT, { emote: false });
         game.socket.emit(SOCKET_CHANNEL, { type: "panToToken", tokenId: token.id });
-        
+
         // Keep refreshing the bubble so it doesn't fade out
         bubbleInterval = setInterval(() => {
           canvas.hud.bubbles.broadcast(token, DEFAULT_BUBBLE_TEXT, { emote: false });
@@ -140,6 +141,7 @@ Hooks.on("ready", () => {
         if (canvas.hud?.bubbles?._clearBubble) {
           canvas.hud.bubbles._clearBubble(token);
         }
+        document.querySelectorAll(`.chat-bubble[data-token-id="${token.id}"]`).forEach(e => e.remove());
         game.socket.emit(SOCKET_CHANNEL, { type: "clearBubble", tokenId: token.id });
       }
     }
