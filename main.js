@@ -46,6 +46,12 @@ Hooks.once("init", () => {
         canvas.animatePan({ x: token.center.x, y: token.center.y, duration: 250 });
       }
     }
+    if (payload.type === "clearBubble") {
+      const token = canvas.tokens?.get(payload.tokenId);
+      if (token && canvas.hud?.bubbles?._clearBubble) {
+        canvas.hud.bubbles._clearBubble(token);
+      }
+    }
   });
 
   game.settings.register(MODULE_ID, "hotkey", {
@@ -81,6 +87,7 @@ Hooks.on("ready", () => {
   console.log("AcolightSuite | Ready.");
 
   let isActive = false;
+  let bubbleInterval = null;
 
   const isEditableTarget = (target) => {
     if (!target) return false;
@@ -112,21 +119,39 @@ Hooks.on("ready", () => {
         // Broadcast the typing bubble to all clients
         canvas.hud.bubbles.broadcast(token, DEFAULT_BUBBLE_TEXT, { emote: false });
         game.socket.emit(SOCKET_CHANNEL, { type: "panToToken", tokenId: token.id });
+        
+        // Keep refreshing the bubble so it doesn't fade out
+        bubbleInterval = setInterval(() => {
+          canvas.hud.bubbles.broadcast(token, DEFAULT_BUBBLE_TEXT, { emote: false });
+        }, 2000);
+      }
+    }
+  };
+
+  const clearActiveBubble = () => {
+    if (isActive) {
+      isActive = false;
+      if (bubbleInterval) {
+        clearInterval(bubbleInterval);
+        bubbleInterval = null;
+      }
+      const token = getToken();
+      if (token) {
+        if (canvas.hud?.bubbles?._clearBubble) {
+          canvas.hud.bubbles._clearBubble(token);
+        }
+        game.socket.emit(SOCKET_CHANNEL, { type: "clearBubble", tokenId: token.id });
       }
     }
   };
 
   const handleKeyUp = (event) => {
     if (event.code !== getHotkeyCode()) return;
-    if (isActive) {
-      isActive = false;
-    }
+    clearActiveBubble();
   };
 
   const handleBlur = () => {
-    if (isActive) {
-      isActive = false;
-    }
+    clearActiveBubble();
   };
 
   window.addEventListener("keydown", handleKeyDown);
