@@ -160,3 +160,88 @@ Hooks.on("ready", () => {
   window.addEventListener("keyup", handleKeyUp);
   window.addEventListener("blur", handleBlur);
 });
+
+/* =========================================
+ * V13 EASY RULER SCALE
+ * ========================================= */
+const ERS = "easy-ruler-scale";
+
+Hooks.once("init", () => {
+  game.settings.register("AcolightSuite", ERS, {
+    name: "Ruler Scale (%)",
+    hint: "Adjusts the scale of the ruler measurement labels.",
+    scope: "client",
+    config: true,
+    default: 100,
+    type: Number,
+    onChange: _updateRulerScale
+  });
+
+  // Inject a style block for the ruler scale CSS variable (for HTML HUD labels)
+  const style = document.createElement('style');
+  style.id = 'easy-ruler-scale-style';
+  style.innerHTML = `
+    :root {
+      --easy-ruler-scale: 1;
+    }
+    #interface .waypoint-label,
+    #interface .ruler-labels .waypoint-label,
+    #interface .ruler-labels .segment-label,
+    #interface .ruler-name {
+      transform: scale(var(--easy-ruler-scale, 1)) !important;
+      transform-origin: center center;
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Hook into V13 PIXI labels if applicable
+  if (typeof libWrapper !== "undefined") {
+    const wrapper = function (wrapped, ...args) {
+      wrapped.call(this, ...args);
+      if (!this.labels || !this.labels.children) return;
+      
+      const scale = game.settings.get("AcolightSuite", ERS) || 100;
+      const gs = (canvas.scene?.dimensions?.size || 100) / 100;
+      const zs = 1 / (canvas.stage?.scale?.x || 1);
+      const finalScale = (gs + zs) * (scale / 100);
+
+      // We only apply scale if children are PIXI elements
+      for (let label of this.labels.children) {
+        if (label.transform && label.transform.scale) {
+          label.transform.scale.set(finalScale);
+        }
+      }
+    };
+
+    libWrapper.register("AcolightSuite", "Ruler.prototype._refresh", wrapper, "WRAPPER");
+    
+    // Cover the TokenRuler introduced in V13
+    if (typeof TokenRuler !== "undefined") {
+      libWrapper.register("AcolightSuite", "TokenRuler.prototype._refresh", wrapper, "WRAPPER");
+    }
+  }
+});
+
+Hooks.on("canvasPan", _updateRulerScale);
+Hooks.once("ready", _updateRulerScale);
+
+function _updateRulerScale() {
+  if (!canvas?.ready) return;
+  const scale = game.settings.get("AcolightSuite", ERS) || 100;
+  
+  // Calculate zoom scale for HTML elements to behave like PIXI elements
+  const gs = (canvas.scene?.dimensions?.size || 100) / 100;
+  const zs = 1 / (canvas.stage?.scale?.x || 1);
+  const finalScale = (gs + zs) * (scale / 100);
+
+  document.documentElement.style.setProperty('--easy-ruler-scale', finalScale);
+  
+  // Force a refresh of rulers to update PIXI scales
+  if (canvas.controls?.rulers) {
+    for (let ruler of canvas.controls.rulers.children) {
+      if (typeof ruler._refresh === "function") {
+        ruler._refresh();
+      }
+    }
+  }
+}
